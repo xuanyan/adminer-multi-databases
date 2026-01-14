@@ -31,20 +31,34 @@ class MultiDatabases extends Plugin {
 
     function loginForm() {
         $databases = [];
+        $quickSelect = [
+          '' => ''
+        ];
         foreach ($this->databases as $name => $config) {
             $databases[$name] = @$config['database'];
+            if (empty($config['password'])) {
+                $quickSelect[$name] = $name;
+            }
         }
+        count($quickSelect) == 1 && $quickSelect = [];
 ?>
 <table class='layout'>
   <?= input_hidden('auth[driver]', DRIVER); ?>
   <?= input_hidden('auth[db]', ''); ?>
+  <?php if ($quickSelect) { echo adminer()->loginFormField('quick-select', '<tr><th>'.lang('select').'<td>', html_select('mySelect', $quickSelect));} ?>
   <?= adminer()->loginFormField('username', '<tr><th>'.lang('Username').'<td>', '<input name="auth[username]" id="username" autofocus value="'.h($_GET["username"]).'" autocomplete="username" autocapitalize="off">'); ?>
   <?= adminer()->loginFormField('password', '<tr><th>'.lang('Password').'<td>', '<input type="password" name="auth[password]" autocomplete="current-password">'); ?>
 </table>
 <p><input id="myLogin" type="button" value="<?=lang('Login'); ?>"></p>
 <script<?= nonce(); ?>>
 var databases = <?= json_encode($databases); ?>;
-
+qs('select[name="mySelect"]').onchange = function() {
+  var username = qs('select[name="mySelect"]').value;
+  qs('input[name="auth[username]"]').value = username;
+  if (username != '') {
+    qs('#myLogin').click();
+  }
+};
 qs('#myLogin').onclick = function() {
   var username = qs('input[name="auth[username]"]').value;
   qs('input[name="auth[db]"]').value = databases[username] ? databases[username] : '';
